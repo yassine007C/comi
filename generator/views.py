@@ -7,8 +7,7 @@ from .models import GeneratedImage
 import os
 import json
 from pydantic import BaseModel, Field
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 import dashscope
 from dashscope import MultiModalConversation
 
@@ -38,11 +37,15 @@ class ImagePrompt(BaseModel):
     )
 
 
-def create_image_description_from_dialogue(context, dialogue, target_line, model_name='gemini-2.5-pro'):
+def create_image_description_from_dialogue(context, dialogue, target_line, model_name='gemini-1.5-flash'):
+    if not settings.GEMINI_API_KEY:
+        return {}
+    
     try:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel(model_name)
     except Exception as e:
-        print(f"Error initializing client: {e}")
+        print(f"Error initializing model: {e}")
         return {}
 
     system_instruction = (
@@ -51,10 +54,12 @@ def create_image_description_from_dialogue(context, dialogue, target_line, model
         "Focus on the moment the target line is delivered. The main focus should be the speaking character, but "
         "include other relevant characters if their presence enhances the visual storytelling. Depict the atmosphere, "
         "lighting, and emotional tone naturally. Occasionally (about 40% of the time), widen the scene to include "
-        "both the speaker and other characters. The output MUST be a JSON object conforming strictly to the provided schema."
+        "both the speaker and other characters. Return a JSON object with these fields: subject_description, "
+        "setting_and_scene, action_or_expression, camera_and_style, full_image_prompt."
     )
     
-    user_prompt = f"""
+    user_prompt = f"""{system_instruction}
+
     CONTEXT: {context}
 
     FULL DIALOGUE:
@@ -70,16 +75,13 @@ def create_image_description_from_dialogue(context, dialogue, target_line, model
     """
 
     try:
-        response = client.models.generate_content(
-            model=model_name,
-            contents=user_prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                response_mime_type="application/json",
-                response_schema=ImagePrompt,
-            ),
-        )
-        return json.loads(response.text)
+        response = model.generate_content(user_prompt)
+        response_text = response.text.strip()
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+        return json.loads(response_text.strip())
     except Exception as e:
         print(f"Error during API call: {e}")
         return {}
@@ -163,7 +165,7 @@ def generate_view(request):
             messages.error(request, 'Image generation API is not configured.')
             return redirect('generator:generate')
         
-        messages = [
+        conversation_messages = [
             {
                 "role": "user",
                 "content": [
@@ -179,7 +181,7 @@ def generate_view(request):
             response = MultiModalConversation.call(
                 api_key=settings.IMG_API_KEY,
                 model="qwen-image-edit",
-                messages=messages,
+                messages=conversation_messages,
                 stream=False,
                 watermark=False,
                 negative_prompt="low quality, distorted face, messy text"
