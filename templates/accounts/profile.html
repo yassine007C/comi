@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Comic Generator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <h2>User Profile</h2>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Username:</strong> {{ user.username }}</p>
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Token Balance:</strong> <span class="badge bg-warning text-dark">{{ user.profile.token_balance }}</span></p>
+                        <p><strong>Total Tokens Purchased:</strong> {{ user.profile.total_tokens_purchased }}</p>
+                        <p><strong>Total Images Generated:</strong> {{ user.profile.total_images_generated }}</p>
+                    </div>
+                </div>
+                <a href="{% url 'tokens:packages' %}" class="btn btn-primary mt-3">Buy More Tokens</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

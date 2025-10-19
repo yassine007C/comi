@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Generated Image - Comic Generator{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h2>Generated Comic Scene</h2>
+                <div class="text-center my-4">
+                    <img src="{{ image_url }}" alt="Generated Comic Scene" class="img-fluid rounded" style="max-width: 800px;">
+                </div>
+                <div class="mt-4">
+                    <p><strong>Speaker:</strong> {{ image.speaker }}</p>
+                    <p><strong>Line:</strong> {{ image.target_line }}</p>
+                    <p><strong>Tokens Used:</strong> {{ image.tokens_used }}</p>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'generator:generate' %}" class="btn btn-primary">Generate Another</a>
+                    <a href="{% url 'generator:gallery' %}" class="btn btn-secondary">View Gallery</a>
+                    <a href="{% url 'generator:dashboard' %}" class="btn btn-info">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

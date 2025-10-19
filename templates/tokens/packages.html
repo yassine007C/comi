@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Buy Tokens - Comic Generator{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-center mb-4 text-white">Token Packages</h2>
+    </div>
+</div>
+
+<div class="row">
+    {% for package in packages %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ package.name }}</h3>
+                <h1 class="display-4 my-4">${{ package.price }}</h1>
+                <p class="lead"><strong>{{ package.token_amount }}</strong> Tokens</p>
+                <p class="text-muted">{{ package.description }}</p>
+                <button class="btn btn-primary btn-lg w-100 buy-button" data-package-id="{{ package.id }}">
+                    Buy Now
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+    
+    document.querySelectorAll('.buy-button').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const packageId = e.target.dataset.packageId;
+            
+            try {
+                const response = await fetch('/tokens/create-checkout-session/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ package_id: packageId })
+                });
+                
+                const session = await response.json();
+                
+                if (session.error) {
+                    alert(session.error);
+                    return;
+                }
+                
+                const result = await stripe.redirectToCheckout({
+                    sessionId: session.sessionId
+                });
+                
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

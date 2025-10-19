@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Comic Generator{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2>Welcome, {{ user.username }}!</h2>
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark">
+                            <div class="card-body text-center">
+                                <h3>{{ user.profile.token_balance }}</h3>
+                                <p>Available Tokens</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ user.profile.total_images_generated }}</h3>
+                                <p>Images Generated</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ user.profile.total_tokens_purchased }}</h3>
+                                <p>Total Tokens Purchased</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ recent_images|length }}</h3>
+                                <p>Recent Images</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h3>Recent Generations</h3>
+                {% if recent_images %}
+                    <div class="row">
+                        {% for image in recent_images %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <img src="{{ image.image_url }}" class="card-img-top" alt="Generated Image">
+                                <div class="card-body">
+                                    <p><strong>{{ image.speaker }}:</strong> {{ image.target_line|truncatewords:10 }}</p>
+                                    <small class="text-muted">{{ image.created_at|date:"Y-m-d H:i" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">No images generated yet. <a href="{% url 'generator:generate' %}">Start generating!</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

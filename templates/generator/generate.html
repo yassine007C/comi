@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Comic Scene - Comic Generator{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h2>Generate Comic Scene</h2>
+                <p class="text-muted">Cost: 1 token per generation | Your balance: <strong>{{ user.profile.token_balance }} tokens</strong></p>
+                
+                {% if user.profile.token_balance < 1 %}
+                <div class="alert alert-warning">
+                    You don't have enough tokens. <a href="{% url 'tokens:packages' %}">Buy tokens here</a>
+                </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="context" class="form-label">Scene Context</label>
+                        <textarea name="context" id="context" class="form-control" rows="3" required 
+                                  placeholder="Describe the setting, characters, and situation...">The scene takes place in a dimly lit, rustic medieval tavern. Sir Kaelan, a grizzled, honorable knight, is questioning Elara, a nervous but cunning local informant.</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="dialogue" class="form-label">Dialogue (one line per speaker)</label>
+                        <textarea name="dialogue" id="dialogue" class="form-control" rows="5" required
+                                  placeholder="Speaker1: Line of dialogue&#10;Speaker2: Another line...">Kaelan: Where were you when the scepter went missing?
+Elara: I was polishing tankards, my Lord. The usual drudgery.</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="target_line_index" class="form-label">Select Line to Visualize</label>
+                        <select name="target_line_index" id="target_line_index" class="form-control" required>
+                            <option value="0">Line 1</option>
+                            <option value="1">Line 2</option>
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="character1" class="form-label">Character 1 Image</label>
+                            <input type="file" name="character1" id="character1" class="form-control" accept="image/*" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="character2" class="form-label">Character 2 Image</label>
+                            <input type="file" name="character2" id="character2" class="form-control" accept="image/*" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="background" class="form-label">Background Image</label>
+                            <input type="file" name="background" id="background" class="form-control" accept="image/*" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100" {% if user.profile.token_balance < 1 %}disabled{% endif %}>
+                        Generate Comic Scene (1 Token)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Gallery - Comic Generator{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-center mb-4 text-white">Your Generated Images</h2>
+    </div>
+</div>
+
+<div class="row">
+    {% for image in images %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <img src="{{ image.image_url }}" class="card-img-top" alt="Generated Image">
+            <div class="card-body">
+                <h5 class="card-title">{{ image.speaker }}</h5>
+                <p class="card-text">{{ image.target_line }}</p>
+                <small class="text-muted">{{ image.created_at|date:"Y-m-d H:i" }} | {{ image.tokens_used }} token(s)</small>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <p>No images generated yet.</p>
+                <a href="{% url 'generator:generate' %}" class="btn btn-primary">Start Generating</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
