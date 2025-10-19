@@ -1,0 +1,234 @@
+import os
+import json
+from pydantic import BaseModel, Field
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
+import dashscope
+from dashscope import MultiModalConversation
+
+# عنوان واجهة API
+dashscope.base_http_api_url = 'https://dashscope-intl.aliyuncs.com/api/v1'
+scene_text =  """ 
+"""
+
+#
+
+
+
+
+
+
+
+
+# --- 1. Define Structured Output Schema using Pydantic ---
+# Load .env file
+load_dotenv()
+api_key = os.getenv("IMG_API_KEY")
+# Read key
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+
+
+
+
+
+
+class ImagePrompt(BaseModel):
+    """
+    A structured description suitable for a Text-to-Image model.
+    """
+    subject_description: str = Field(
+        ...,
+        description="Detailed description of the character speaking the line, including mood, attire, and physical posture."
+    )
+    setting_and_scene: str = Field(
+        ...,
+        description="The environment, lighting, time of day, and general atmosphere surrounding the character and the dialogue."
+    )
+    action_or_expression: str = Field(
+        ...,
+        description="The specific action, facial expression, or emotional intensity captured in the moment the line is delivered."
+    )
+    camera_and_style: str = Field(
+        ...,
+        description="Recommended artistic style (e.g., cinematic, watercolor), camera angle (e.g., close-up, wide shot), and general visual mood."
+    )
+    full_image_prompt: str = Field(
+        ...,
+        description="A single, cohesive, highly detailed prompt combining all elements, optimized for image generation."
+    )
+
+# --- 2. Dialogue Data (Example Input) ---
+
+CONTEXT = """
+The scene takes place in a dimly lit, rustic medieval tavern. 
+Sir Kaelan, a grizzled, honorable knight, is questioning Elara, a nervous but cunning local informant. 
+Kaelan believes Elara knows the location of the stolen Royal Scepter, which is vital for the kingdom's stability.
+Elara is trying to deflect suspicion while subtly revealing just enough information to keep Kaelan interested.
+"""
+DIALOGUE = [
+    "Kaelan: Where were you when the scepter went missing?",
+    "Elara: I was polishing tankards, my Lord. The usual drudgery."
+]
+
+speakers = ["Kaelan","Elara"]
+#TARGET_LINE = DIALOGUE[3] # Targeting Elara's response
+
+# --- 3. Gemini Prompt Engineering Function ---
+
+def create_image_description_from_dialogue(
+    context: str,
+    dialogue: list[str],
+    target_line: str,
+    model_name: str = 'gemini-2.5-pro' # Use a powerful model for complex reasoning
+) -> dict:
+    """
+    Generates a structured image description based on a specific line of dialogue, 
+    using the surrounding context and full conversation.
+    """
+    
+    try:
+        # Initialize the client
+        client = genai.Client()
+    except Exception as e:
+        print(f"Error initializing client. Ensure GEMINI_API_KEY is set. Details: {e}")
+        return {}
+
+    # Create the detailed prompt instructions
+    system_instruction = (
+        "You are an expert visual storyteller and image prompt generator. Your task is to take a piece of dialogue "
+        "and its context, and produce a highly detailed, cinematic description suitable for a text-to-image AI "
+        "(like Imagen or Midjourney). Focus on the moment the target line is delivered. The main focus should be "
+        "the speaking character, but include other relevant characters if their presence, reaction, or position enhances "
+        "the visual storytelling. Depict the atmosphere, lighting, and emotional tone naturally, as if from a cinematic frame. "
+        "Occasionally (about 40% of the time), widen the scene to include both the speaker and other characters, "
+        "showing their physical interaction or emotional reactions. "
+        "The output MUST be a JSON object conforming strictly to the provided schema."
+    )
+    
+    user_prompt = f"""
+    CONTEXT: {context}
+
+    FULL DIALOGUE:
+    {'\n'.join(dialogue)}
+
+    TARGET LINE TO VISUALIZE:
+    "{target_line}"
+
+    ---
+    
+    Analyze the target line and the full situation. Describe the moment the line is delivered, 
+    including the speaker and any other characters visible or reacting in the same frame. 
+    Capture emotional tension, lighting, and the spatial relationship between characters.
+    Generate the structured JSON response.
+    """
+
+    print("--- Sending Request to Gemini API ---")
+    
+    try:
+        response = client.models.generate_content(
+            model=model_name,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=ImagePrompt,
+            ),
+        )
+        
+        # The response.text is a strict JSON string due to response_mime_type
+        return json.loads(response.text)
+
+    except Exception as e:
+        print(f"An error occurred during the API call: {e}")
+        return {}
+
+# --- 4. Execution ---
+
+if __name__ == "__main__":
+    
+    for i in range(len(DIALOGUE)):
+        TARGET_LINE = DIALOGUE[i]
+        speakernow = TARGET_LINE.split(":")[0].strip()
+        print(f"Targeting line: '{TARGET_LINE}'")
+        
+        image_data = create_image_description_from_dialogue(
+            context=CONTEXT,
+            dialogue=DIALOGUE,
+            target_line=TARGET_LINE
+        )
+
+        if image_data:
+            print("\n" + "="*50)
+            print("GEMINI GENERATED IMAGE DESCRIPTION (Structured Data)")
+            print("="*50)
+            
+            scene = ""
+            
+            # Print structured components
+            #print(f"\n[Subject]: {image_data.get('subject_description')}")
+            scene = f"\n[Subject]: {image_data.get('subject_description')}"
+
+            #print(f"[Setting]: {image_data.get('setting_and_scene')}")
+            scene += f"\n[Setting]: {image_data.get('setting_and_scene')}"
+
+            #print(f"[Action]:  {image_data.get('action_or_expression')}")
+            scene += f"\n[Action]:  {image_data.get('action_or_expression')}"
+
+            #print(f"[Style]:   {image_data.get('camera_and_style')}")
+            scene += f"\n[Style]:   {image_data.get('camera_and_style')}"
+            
+            #print("\n" + "-"*50)
+            #print("FULL OPTIMIZED IMAGE PROMPT:")
+            #print(image_data.get('full_image_prompt'))
+            scene += f"\n[FULL OPTIMIZED IMAGE PROMPT:]:   {image_data.get('full_image_prompt')}"
+
+            #
+            PR1=f""" You are given three images:
+            - Image 1 shows {speakers[0]}.
+            - Image 2 shows {speakers[1]}.
+            - Image 3 shows the background scene.
+            Create a single comic-style scene that combines them:
+            """
+            PR2=f""" Add **empty speech bubble** above {speakernow} (no text inside).
+            Make the bubble clearly visible and leave enough blank space for dialogue.
+            Ensure characters correspond correctly to their images and fit naturally in the background.
+            """
+            scene_text = PR1+"""\n"""+scene+"""\n"""+PR2
+            print(scene_text)
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"image": "C:/Users/PC/Desktop/ALLFILES/per/alice.jpeg"},  # الصورة 1 = الشخصية الأولى
+                        {"image": "C:/Users/PC/Desktop/ALLFILES/per/bob.jpeg"},  # الصورة 2 = الشخصية الثانية
+                        {"image": "C:/Users/PC/Desktop/ALLFILES/per/Home.jpeg"},  # الصورة 3 = الخلفية / المكان
+                        {"text": scene_text }
+                    ]
+                }
+            ]
+            # 🧠 استدعاء النموذج
+            response = MultiModalConversation.call(
+                api_key=api_key,
+                model="qwen-image-edit",
+                messages=messages,
+                stream=False,
+                watermark=False,
+                negative_prompt="low quality, distorted face, messy text"
+            )
+            scene_text = """ """
+            scene = """ """
+
+            # 💾 عرض النتيجة
+            if response.status_code == 200:
+                output_image = response.output.choices[0].message.content[0]['image']
+                print("✅ Output comic scene URL:", output_image)
+            else:
+                print(f"❌ HTTP status code: {response.status_code}")
+                print(f"Error code: {response.code}")
+                print(f"Error message: {response.message}")
+                print("See docs: https://www.alibabacloud.com/help/en/model-studio/error-code")
+
+            #
+            print("-"*50)
