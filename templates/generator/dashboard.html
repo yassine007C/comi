@@ -3,70 +3,114 @@
 {% block title %}Dashboard - Comic Generator{% endblock %}
 
 {% block content %}
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2>Welcome, {{ user.username }}!</h2>
-                <div class="row mt-4">
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-dark">
-                            <div class="card-body text-center">
-                                <h3>{{ user.profile.token_balance }}</h3>
-                                <p>Available Tokens</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-info text-white">
-                            <div class="card-body text-center">
-                                <h3>{{ user.profile.total_images_generated }}</h3>
-                                <p>Images Generated</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white">
-                            <div class="card-body text-center">
-                                <h3>{{ user.profile.total_tokens_purchased }}</h3>
-                                <p>Total Tokens Purchased</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-primary text-white">
-                            <div class="card-body text-center">
-                                <h3>{{ recent_images|length }}</h3>
-                                <p>Recent Images</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<style>
+    body {
+        background: linear-gradient(135deg, #f9fafb 0%, #eef2f7 100%);
+    }
+    .card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        transition: all 0.2s ease-in-out;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+        color: white;
+        border: none;
+    }
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.85;
+    }
+    .dashboard-header h2 {
+        font-weight: 600;
+    }
+    .dashboard-header p {
+        color: #6c757d;
+    }
+    .image-card img {
+        border-radius: 0.75rem 0.75rem 0 0;
+        height: 220px;
+        object-fit: cover;
+    }
+    .image-card:hover img {
+        filter: brightness(0.9);
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="dashboard-header mb-4 text-center">
+        <h2 class="mb-1">Welcome back, {{ user.username }} 👋</h2>
+        <p>Here’s an overview of your activity and recent comic generations.</p>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card bg-warning text-dark text-center p-3">
+                <div class="stat-icon mb-2"><i class="bi bi-coin"></i></div>
+                <h3>{{ user.profile.token_balance }}</h3>
+                <p class="mb-0">Available Tokens</p>
             </div>
         </div>
-
-        <div class="card">
-            <div class="card-body">
-                <h3>Recent Generations</h3>
-                {% if recent_images %}
-                    <div class="row">
-                        {% for image in recent_images %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card">
-                                <img src="{{ image.image_url }}" class="card-img-top" alt="Generated Image">
-                                <div class="card-body">
-                                    <p><strong>{{ image.speaker }}:</strong> {{ image.target_line|truncatewords:10 }}</p>
-                                    <small class="text-muted">{{ image.created_at|date:"Y-m-d H:i" }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-center text-muted">No images generated yet. <a href="{% url 'generator:generate' %}">Start generating!</a></p>
-                {% endif %}
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card bg-info text-white text-center p-3">
+                <div class="stat-icon mb-2"><i class="bi bi-image"></i></div>
+                <h3>{{ user.profile.total_images_generated }}</h3>
+                <p class="mb-0">Images Generated</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card bg-success text-white text-center p-3">
+                <div class="stat-icon mb-2"><i class="bi bi-bag-check"></i></div>
+                <h3>{{ user.profile.total_tokens_purchased }}</h3>
+                <p class="mb-0">Tokens Purchased</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card bg-primary text-white text-center p-3">
+                <div class="stat-icon mb-2"><i class="bi bi-clock-history"></i></div>
+                <h3>{{ recent_images|length }}</h3>
+                <p class="mb-0">Recent Images</p>
             </div>
         </div>
     </div>
+
+    <!-- Recent Images Section -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Recent Generations</h4>
+                <a href="{% url 'generator:generate' %}" class="btn btn-outline-primary btn-sm">+ Generate New</a>
+            </div>
+
+            {% if recent_images %}
+                <div class="row g-3">
+                    {% for image in recent_images %}
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card image-card">
+                            <img src="{{ image.image_url }}" alt="Generated Image" class="card-img-top">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>{{ image.speaker }}:</strong> {{ image.target_line|truncatewords:10 }}</p>
+                                <small class="text-muted"><i class="bi bi-calendar3"></i> {{ image.created_at|date:"Y-m-d H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted mb-3">No images generated yet.</p>
+                    <a href="{% url 'generator:generate' %}" class="btn btn-primary">Start Generating</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 {% endblock %}

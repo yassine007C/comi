@@ -6,13 +6,15 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+#load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-SECRET_KEY = os.getenv('SESSION_SECRET', 'django-insecure-vq9(w3ihg2=_sqkkb31)f70embc@c(u&y6+*36yt06)v_(t&d@')
 
-DEBUG = True
+SECRET_KEY = os.environ.get('SECRET_KEY')
+
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -31,6 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,17 +61,26 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'comic_generator.wsgi.application'
-
+BASE_DIR = Path(__file__).resolve().parent.parent
+'''
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE'),
-        'USER': os.getenv('PGUSER'),
-        'PASSWORD': os.getenv('PGPASSWORD'),
-        'HOST': os.getenv('PGHOST'),
-        'PORT': os.getenv('PGPORT'),
+        'NAME': os.environ.get('NAME'),
+        'USER': os.environ.get('USER'),
+        'PASSWORD': os.environ.get('PASSWORD'),
+        'HOST': os.environ.get('HOST'),
+        'OPTIONS': {'sslmode': 'require'},
     }
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -95,7 +107,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+'''
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+'''
+STATIC_ROOT =os.path.join(BASE_DIR, 'staticfiles')
+
+STORAGES = {
+    
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'

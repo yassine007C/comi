@@ -8,23 +8,30 @@
         <div class="card">
             <div class="card-body">
                 <h2>Generate Comic Scene</h2>
-                <p class="text-muted">Cost: 1 token per generation | Your balance: <strong>{{ user.profile.token_balance }} tokens</strong></p>
-                
+                <p class="text-muted">
+                    Cost: 1 token per generation | Your balance:
+                    <strong>{{ user.profile.token_balance }} tokens</strong>
+                </p>
+
                 {% if user.profile.token_balance < 1 %}
                 <div class="alert alert-warning">
                     You don't have enough tokens. <a href="{% url 'tokens:packages' %}">Buy tokens here</a>
                 </div>
                 {% endif %}
 
-                <form method="post" enctype="multipart/form-data">
+                <form method="post" enctype="multipart/form-data" id="comicForm">
                     {% csrf_token %}
-                    
+
+                    <!-- Scene context -->
                     <div class="mb-3">
                         <label for="context" class="form-label">Scene Context</label>
                         <textarea name="context" id="context" class="form-control" rows="3" required 
-                                  placeholder="Describe the setting, characters, and situation...">The scene takes place in a dimly lit, rustic medieval tavern. Sir Kaelan, a grizzled, honorable knight, is questioning Elara, a nervous but cunning local informant.</textarea>
+                                  placeholder="Describe the setting, characters, and situation...">
+The scene takes place in a dimly lit, rustic medieval tavern. Sir Kaelan, a grizzled, honorable knight, is questioning Elara, a nervous but cunning local informant.
+                        </textarea>
                     </div>
 
+                    <!-- Dialogue -->
                     <div class="mb-3">
                         <label for="dialogue" class="form-label">Dialogue (one line per speaker)</label>
                         <textarea name="dialogue" id="dialogue" class="form-control" rows="5" required
@@ -32,29 +39,60 @@
 Elara: I was polishing tankards, my Lord. The usual drudgery.</textarea>
                     </div>
 
+                    <!-- Target line -->
                     <div class="mb-3">
                         <label for="target_line_index" class="form-label">Select Line to Visualize</label>
                         <select name="target_line_index" id="target_line_index" class="form-control" required>
                             <option value="0">Line 1</option>
                             <option value="1">Line 2</option>
+                            <option value="2">Line 3</option>
+                            <option value="3">Line 4</option>
+                            <option value="4">Line 5</option>
                         </select>
                     </div>
 
+                    <!-- Dynamic character upload section -->
+                    <h4 class="mt-4">Characters</h4>
+                    <div id="charactersContainer" class="mb-3">
+                        <div class="row character-row mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Character Name</label>
+                                <input type="text" name="character_name_1" class="form-control" placeholder="e.g. Kaelan" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Character Image</label>
+                                <input type="file" name="character_image_1" class="form-control" accept="image/*" required>
+                            </div>
+                        </div>
+                        <div class="row character-row mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Character Name</label>
+                                <input type="text" name="character_name_2" class="form-control" placeholder="e.g. Elara" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Character Image</label>
+                                <input type="file" name="character_image_2" class="form-control" accept="image/*" required>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="addCharacterBtn" class="btn btn-outline-secondary mb-3 w-100">
+                        + Add Another Character
+                    </button>
+
+                    <!-- Background -->
+                    <h4>Background</h4>
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="character1" class="form-label">Character 1 Image</label>
-                            <input type="file" name="character1" id="character1" class="form-control" accept="image/*" required>
+                            <label for="background_name" class="form-label">Background Name</label>
+                            <input type="text" name="background_name" id="background_name" class="form-control" placeholder="e.g. Tavern interior" required>
                         </div>
-                        <div class="col-md-4">
-                            <label for="character2" class="form-label">Character 2 Image</label>
-                            <input type="file" name="character2" id="character2" class="form-control" accept="image/*" required>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-8">
                             <label for="background" class="form-label">Background Image</label>
                             <input type="file" name="background" id="background" class="form-control" accept="image/*" required>
                         </div>
                     </div>
 
+                    <!-- Submit -->
                     <button type="submit" class="btn btn-primary btn-lg w-100" {% if user.profile.token_balance < 1 %}disabled{% endif %}>
                         Generate Comic Scene (1 Token)
                     </button>
@@ -63,4 +101,25 @@ Elara: I was polishing tankards, my Lord. The usual drudgery.</textarea>
         </div>
     </div>
 </div>
+
+<!-- Script for adding characters dynamically -->
+<script>
+let characterCount = 2;
+document.getElementById("addCharacterBtn").addEventListener("click", function() {
+    characterCount++;
+    const container = document.getElementById("charactersContainer");
+    const div = document.createElement("div");
+    div.classList.add("row", "character-row", "mb-2");
+    div.innerHTML = `
+        <div class="col-md-4">
+            <label class="form-label">Character Name</label>
+            <input type="text" name="character_name_${characterCount}" class="form-control" placeholder="Character ${characterCount}" required>
+        </div>
+        <div class="col-md-8">
+            <label class="form-label">Character Image</label>
+            <input type="file" name="character_image_${characterCount}" class="form-control" accept="image/*" required>
+        </div>`;
+    container.appendChild(div);
+});
+</script>
 {% endblock %}
