@@ -167,7 +167,7 @@ def generate_view(request):
         saved_files = []
         try:
             for char in characters:
-                path = default_storage.save(f'temp/{char["image"].name}', char["image"])
+                path = default_storage.save(f"temp/{char['image'].name}", char["image"])
                 char["path"] = os.path.join(settings.MEDIA_ROOT, path)
                 saved_files.append(path)
 
