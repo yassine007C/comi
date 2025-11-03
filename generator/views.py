@@ -193,7 +193,7 @@ def generate_view(request):
 
                 # --- Build text prompt ---
                 char_text = ", ".join([c['name'] for c in characters])
-                pr1 = f'You are given several images: {", ".join([f"Image {idx+1} shows {c[\'name\']}" for idx, c in enumerate(characters)])}, and one background image showing {background_name}.'
+                pr1 = f"You are given several images: {', '.join([f'Image {idx+1} shows {c['name']}' for idx, c in enumerate(characters)])}, and one background image showing {background_name}."
                 pr2 = f"Create a single comic-style scene showing the moment when {speaker} says their line."
                 pr3 = f"Add an empty speech bubble above {speaker} (no text inside)."
                 pr4 = "Ensure characters appear natural in the scene and maintain their visual style."
