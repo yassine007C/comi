@@ -3,6 +3,16 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
+from django.contrib.sitemaps.views import sitemap
+from yourapp.sitemap import rest_framework, accounts, generator
+
+
+sitemaps = {
+    'rest_framework': Rest_frameworkSitemap,
+    'accounts': AccountsSitemap,
+    'generator': generatorSitemap,
+    
+}
 
 urlpatterns = [
     path('admin/', admin.site.urls),
