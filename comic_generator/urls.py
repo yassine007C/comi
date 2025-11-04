@@ -14,7 +14,6 @@ urlpatterns = [
     path('tokens/', include('tokens.urls')),
     path('generator/', include('generator.urls')),
     path('', lambda request: redirect('accounts:login')),
-    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
 ]
 
 if settings.DEBUG:
