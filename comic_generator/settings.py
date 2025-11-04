@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'accounts',
     'tokens',
     'generator',
+    'django.contrib.sitemaps',
 ]
 
 MIDDLEWARE = [
