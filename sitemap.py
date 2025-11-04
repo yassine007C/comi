@@ -1,15 +1,7 @@
 from django.contrib.sitemaps import Sitemap
-from .models import rest_framework, accounts, generator
+from generator.models import GeneratedImage
+from accounts.models import UserProfile
 
-class Rest_frameworkSitemap(Sitemap):
-    changefreq = "weekly"
-    priority = 0.8
-
-    def items(self):
-        return rest_framework.objects.all()
-
-    def lastmod(self, obj):
-        return obj.updated_at  # Or the relevant datetime field
 
 
 class AccountsSitemap(Sitemap):
@@ -17,23 +9,28 @@ class AccountsSitemap(Sitemap):
     priority = 0.5
 
     def items(self):
-        return accounts.objects.all()
+        return UserProfile.objects.all()
 
     def lastmod(self, obj):
-        return obj.updated_at  # Adjust if you use a different timestamp field
+        return obj.updated_at
 
     def location(self, obj):
-        return obj.get_absolute_url()  # You need get_absolute_url() on this model too
+        # Provide absolute URL for UserProfile pages. 
+        # If UserProfile doesn't have get_absolute_url, define here:
+        return f"/accounts/profile/{obj.user.username}/"  # Adjust as per your URL pattern
 
-class GeneratorSitemap(Sitemap):
+
+class GeneratedImageSitemap(Sitemap):
     changefreq = "monthly"
     priority = 0.5
 
     def items(self):
-        return generator.objects.all()
+        return GeneratedImage.objects.all()
 
     def lastmod(self, obj):
-        return obj.updated_at  # Adjust if you use a different timestamp field
+        return obj.created_at
 
     def location(self, obj):
-        return obj.get_absolute_url()  # You need get_absolute_url() on this model too
+        # If you have a URL pattern for each generated image, use it here.
+        # If you don't have get_absolute_url on GeneratedImage, define your URL manually. Example:
+        return f"/generated_images/{obj.pk}/"
