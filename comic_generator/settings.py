@@ -29,10 +29,8 @@ INSTALLED_APPS = [
     'accounts',
     'tokens',
     'generator',
-    'django.contrib.sites',
-    'django.contrib.sitemaps',
 ]
-SITE_ID = 1
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
