@@ -12,6 +12,8 @@ from dashscope import MultiModalConversation
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from .tasks import generate_image_for_line
+from django.contrib.auth.models import User
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -178,94 +180,18 @@ def generate_view(request):
             # --- Loop through all dialogue lines ---
             all_results = []
             for i, line in enumerate(dialogue_lines):
-                print(f"Processing dialogue line {i + 1}: {line}")
-
-                image_data = create_image_description_from_dialogue(
+                generate_image_for_line.delay(
+                    user_id=request.user.id,
                     context=context,
                     dialogue=dialogue_lines,
-                    target_line=line
+                    target_line=line,
+                    characters=characters,
+                    background_image_path=background_full,
                 )
-                if not image_data:
-                    continue
-
-                # Get speaker name from line
-                speaker = line.split(":")[0].strip() if ":" in line else "Unknown"
-
-                # --- Build text prompt ---
-                char_text = ", ".join([c['name'] for c in characters])
-                images_desc = ", ".join([f'Image {idx+1} shows {c["name"]}' for idx, c in enumerate(characters)])
-                pr1 = f"You are given several images: {images_desc}, and one background image showing {background_name}."
-                pr2 = f"Create a single comic-style scene showing the moment when {speaker} says his line."
-                pr3 = f"Add an empty speech bubble above {speaker} (no text inside)."
-                pr4 = "Ensure characters appear natural in the scene and maintain their visual style."
-                scene_text = pr1 + "\n" + json.dumps(image_data, indent=2) + "\n" + pr2 + "\n" + pr3 + "\n" + pr4
-
-                # --- Prepare multimodal input for DashScope ---
-                message_content = []
-                for char in characters:
-                    message_content.append({"image": char["path"]})
-                message_content.append({"image": background_full})
-                message_content.append({"text": scene_text})
-
-                # --- Call the image model ---
-                try:
-                    response = MultiModalConversation.call(
-                        api_key=settings.IMG_API_KEY,
-                        model="qwen-image-edit",
-                        messages=[{"role": "user", "content": message_content}],
-                        stream=False,
-                        watermark=False,
-                        negative_prompt="low quality, distorted face, messy text"
-                    )
-
-                    if response.status_code == 200:
-                        output_image = response.output.choices[0].message.content[0]['image']
-
-                        # Save result in DB
-                        generated_image = GeneratedImage.objects.create(
-                            user=request.user,
-                            context=context,
-                            dialogue=dialogue_lines,
-                            target_line=line,
-                            speaker=speaker,
-                            image_url=output_image,
-                            tokens_used=1,
-                            subject_description=image_data.get('subject_description', ''),
-                            setting_and_scene=image_data.get('setting_and_scene', ''),
-                            action_or_expression=image_data.get('action_or_expression', ''),
-                            camera_and_style=image_data.get('camera_and_style', ''),
-                            full_image_prompt=image_data.get('full_image_prompt', '')
-                        )
-
-                        all_results.append(generated_image)
-
-                        # Deduct one token per image
-                        request.user.profile.deduct_tokens(1)
-                        request.user.profile.total_images_generated += 1
-                        request.user.profile.save()
-
-                except Exception as e:
-                    print(f"Error generating image for line {i+1}: {e}")
-                    continue
-
-            # --- Clean up temporary files ---
-            for path in saved_files:
-                default_storage.delete(path)
-
-            if not all_results:
-                messages.error(request, 'Failed to generate any comic scenes.')
-                return redirect('generator:generate')
-
-            messages.success(request, f'Successfully generated {len(all_results)} scenes!')
-            return render(request, 'generator/result.html', {'scenes': all_results})
-
-        except Exception as e:
-            for path in saved_files:
-                default_storage.delete(path)
-            messages.error(request, f'Error: {e}')
-            return redirect('generator:generate')
-
-    # --- GET method ---
+    
+            messages.success(request, "Your request is being processed. Check back later in your gallery.")
+            return redirect('generator:image_gallery')
+            
     return render(request, 'generator/generate.html')
 
 
