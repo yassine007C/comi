@@ -3,7 +3,8 @@ from celery import shared_task
 from django.contrib.auth import get_user_model
 from .models import GeneratedImage
 import os
-from .views import create_image_description_from_dialogue, MultiModalConversation
+from .views import MultiModalConversation
+from .image_utils import create_image_description_from_dialogue
 from django.conf import settings
 
 @shared_task
