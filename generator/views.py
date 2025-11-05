@@ -190,11 +190,8 @@ def generate_view(request):
                 )
     
             messages.success(request, "Your request is being processed. Check back later in your gallery.")
-            return redirect('generator:image_gallery')
-            
+            return redirect('generator:image_gallery')        
     return render(request, 'generator/generate.html')
-
-
 @login_required
 def image_gallery(request):
     images = GeneratedImage.objects.filter(user=request.user)
