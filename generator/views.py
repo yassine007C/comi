@@ -190,7 +190,14 @@ def generate_view(request):
                 )
     
             messages.success(request, "Your request is being processed. Check back later in your gallery.")
-            return redirect('generator:image_gallery')        
+            return redirect('generator:image_gallery') 
+        except Exception as e:
+            # handle the error, clean up or show message
+            messages.error(request, f"An error occurred: {e}")
+            # optionally clean up saved files here or re-raise
+            for path in saved_files:
+                default_storage.delete(path)
+            return redirect('generator:generate')
     return render(request, 'generator/generate.html')
 @login_required
 def image_gallery(request):
